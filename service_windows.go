@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -173,6 +174,11 @@ func (ws *windowsService) Execute(args []string, r <-chan svc.ChangeRequest, cha
 loop:
 	for {
 		c := <-r
+		if (c.Cmd > svc.Cmd(windows.SERVICE_INTERROGATE) && c.Cmd < svc.Cmd(windows.SERVICE_USER_DEFINED_CONTROL)) {
+			ws.i.Cmd(ws, uint32(c.Cmd))
+			continue loop
+		}
+
 		switch c.Cmd {
 		case svc.Interrogate:
 			changes <- c.CurrentStatus
